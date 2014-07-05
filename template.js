@@ -76,9 +76,10 @@ window.template = {};
 		this.toRegex = function(flags) {
 			return new RegExp(this.str, flags);
 		};
-		this.interpolate = function() {
+		this.interpolate = function(scope) {
+			scope=scope||function(func){return eval(func);}
 			this.str = this.str.replace(/\{\{(([^\}]|\}[^\}])*)\}\}/g, function(a, b) {
-				return eval(b);
+				return scope(b);
 			});
 			return this;
 		};
@@ -89,6 +90,20 @@ window.template = {};
 			});
 			this.str=$;
 			return this;
+		};
+		this.dup=function(){
+			return new ts(this.str.valueOf())
+		}
+		this.toLambdaFunction=function(lambdaArgs,innerVariables){
+			var inner="",inners=[],$=this,i=innerVariables;
+			innerVariables.mapx(function(a,i){
+				inners.push(i+" = i[\""+i+"\"]");
+			});
+			if((inner=inners.join(",\n\t"))!==""){
+				inner="\tvar "+inner+";\n";
+			}
+			console.log(inner="(function("+lambdaArgs.join(", ")+") {\n"+inner+"\treturn $.dup().interpolate();\n})")
+			return eval(inner);
 		}
 	};
 	var defaultEscape = [];
