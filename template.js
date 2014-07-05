@@ -4,16 +4,19 @@ window.template = {};
 		return a(this.valueOf(), 0, this);
 	};
 	Object.prototype.mapx = function(a) {
-		var key=Object.keys(this),l=key.length,res={},i="";
-		for(var j=0;j<l;++j){
-			i=key[j];
-			if(typeof this[i]==="object"){
-				res[i]=this[i].mapx(a);
-			}else{
-				if(typeof this[i]==="function"){
+		var key = Object.keys(this),
+			l = key.length,
+			res = {},
+			i = "";
+		for (var j = 0; j < l; ++j) {
+			i = key[j];
+			if (typeof this[i] === "object") {
+				res[i] = this[i].mapx(a);
+			} else {
+				if (typeof this[i] === "function") {
 					continue;
-				}else{
-					res[i]=a(this[i],i,this);
+				} else {
+					res[i] = a(this[i], i, this);
 				}
 			}
 		}
@@ -70,7 +73,129 @@ window.template = {};
 			this.str = this.str.replace(a, b);
 			return this;
 		};
+		this.toRegex = function(flags) {
+			return new RegExp(this.str, flags);
+		};
+		this.interpolate = function() {
+			this.str = this.str.replace(/\{\{(([^\}]|\}[^\}])*)\}\}/g, function(a, b) {
+				return eval(b);
+			});
+			return this;
+		};
+		this.escape = function(escapeFunctionList) {
+			var efl = escapeFunctionList === undefined ? defaultEscape : escapeFunctionList,$=this.str;
+			efl.mapx(function(a){
+				$=a($);
+			});
+			this.str=$;
+			return this;
+		}
 	};
+	var defaultEscape = [];
+	_.escapers = {};
+	(function($) {
+		//escape
+		$.nameChar = {
+			"Alpha": "Α",
+			"Beta": "Β",
+			"Gamma": "Γ",
+			"Delta": "Δ",
+			"Epsilon": "Ε",
+			"Zeta": "Ζ",
+			"Eta": "Η",
+			"Theta": "Θ",
+			"Iota": "Ι",
+			"Kappa": "Κ",
+			"Lambda": "Λ",
+			"Mu": "Μ",
+			"Nu": "Ν",
+			"Xi": "Ξ",
+			"Omicron": "Ο",
+			"Pi": "Π",
+			"Rho": "Ρ",
+			"Sigma": "Σ",
+			"Tau": "Τ",
+			"Upsilon": "Υ",
+			"Phi": "Φ",
+			"Chi": "Χ",
+			"Psi": "Ψ",
+			"Omega": "Ω",
+			"alpha": "α",
+			"beta": "β",
+			"gamma": "γ",
+			"delta": "δ",
+			"epsilon": "ε",
+			"zeta": "ζ",
+			"eta": "η",
+			"theta": "θ",
+			"iota": "ι",
+			"kappa": "κ",
+			"lambda": "λ",
+			"mu": "μ",
+			"nu": "ν",
+			"xi": "ξ",
+			"omicron": "ο",
+			"pi": "π",
+			"rho": "ρ",
+			"sigma": "ς",
+			"osigma":"σ",
+			"tau": "τ",
+			"upsilon": "υ",
+			"phi": "φ",
+			"chi": "χ",
+			"psi": "ψ",
+			"omega": "ω",
+			"sup0":"⁰",
+			"sup1":"¹",
+			"sup2":"²",
+			"sup3":"³",
+			"sup4":"⁴",
+			"sup5":"⁵",
+			"sup6":"⁶",
+			"sup7":"⁷",
+			"sup8":"⁸",
+			"sup9":"⁹",
+			"sup+":"⁺",
+			"sup-":"⁻",
+			"sup=":"⁼",
+			"supLeftBracket":"⁽",
+			"supRightBracket":"⁾",
+			"supn":"ⁿ",
+			"^0":"⁰",/*short*/
+			"^1":"¹",
+			"^2":"²",
+			"^3":"³",
+			"^4":"⁴",
+			"^5":"⁵",
+			"^6":"⁶",
+			"^7":"⁷",
+			"^8":"⁸",
+			"^9":"⁹",
+		};
+		$.newLine = function(a) {
+			return a.replace(/\\n/g, "\n");
+		};
+		$.tab = function(a) {
+			return a.replace(/\\t/g, "\t");
+		};
+		$.tab2space = function(a, size) {
+			size = size === undefined ? 3 : size;
+			var b = new Array(size);
+			for (var i = 0; i < size; ++i) {
+				b[i] = " ";
+			};
+			b = b.join("");
+			return a.replace(/\\t|\t/g, b);
+		}
+		$.named = function(a) {
+			return a.replace(/\\f\{([a-zA-Z0-9\_\s\^\:\+\-\=]*)\}/, function(a,b) {
+				return b.split(" ").mapx(function(a) {
+					return $.nameChar[a];
+				}).join("");
+			});
+		}
+		defaultEscape.push($.named);
+	})(_.escapers);
 	String.prototype.toTemplate = function() {
 		//these two can be converted very well
 		return new ts(this);
